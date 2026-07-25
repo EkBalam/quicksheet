@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2b8aef"/>
+      <stop offset="100%" stop-color="#0b3d91"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="1024" rx="225" fill="url(#bg)"/>
+
+  <rect x="170" y="170" width="684" height="684" rx="48" fill="#ffffff" opacity="0.96"/>
+
+  <!-- grid lines: 4x4 cells -->
+  <g stroke="#a9c3ee" stroke-width="12" stroke-linecap="round">
+    <line x1="341" y1="170" x2="341" y2="854"/>
+    <line x1="512" y1="170" x2="512" y2="854"/>
+    <line x1="683" y1="170" x2="683" y2="854"/>
+    <line x1="170" y1="341" x2="854" y2="341"/>
+    <line x1="170" y1="512" x2="854" y2="512"/>
+    <line x1="170" y1="683" x2="854" y2="683"/>
+  </g>
+
+  <!-- accent highlighted cell -->
+  <rect x="347" y="347" width="159" height="159" rx="16" fill="#f4b400"/>
+
+  <!-- lightning bolt (speed) inside the accent cell -->
+  <path d="M7 2v11h3v9l7-12h-4l4-8z" fill="#ffffff" transform="translate(363.5,354.5) scale(6)"/>
+</svg>

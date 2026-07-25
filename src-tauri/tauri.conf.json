@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "MiniExcel",
+  "productName": "Quicksheet",
   "version": "0.1.0",
-  "identifier": "com.aguil.miniexcel",
+  "identifier": "com.aguil.quicksheet",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "MiniExcel",
+        "title": "Quicksheet",
         "width": 420,
         "height": 320,
         "minWidth": 280,
