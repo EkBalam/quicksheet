@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniExcel</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <button id="settings-btn" title="Configuración">⚙</button>
+    <button id="zoom-indicator" title="Clic para restablecer al 100%">100%</button>
+    <button id="clear-all-btn" title="Borrar todo">🗑</button>
+    <div id="settings-panel" class="hidden">
+      <label for="shortcut-input">Atajo global (mostrar/ocultar)</label>
+      <input id="shortcut-input" type="text" spellcheck="false" autocomplete="off" placeholder="Ctrl+Alt+E" />
+      <div id="settings-actions">
+        <button id="shortcut-save">Guardar</button>
+        <button id="settings-close">Cerrar</button>
+      </div>
+      <p id="shortcut-status"></p>
+    </div>
+    <div id="formula-bar">
+      <div id="formula-bar-addr"></div>
+      <input id="formula-bar-input" type="text" spellcheck="false" autocomplete="off" />
+    </div>
+    <div id="grid-container">
+      <table id="grid"></table>
+    </div>
+  </body>
+</html>

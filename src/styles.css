@@ -1,0 +1,354 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #f3f3f3;
+  color: #1a1a1a;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: #1e1e1e;
+    color: #ddd;
+  }
+}
+
+#formula-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #d0d0d0;
+  background: #f3f3f3;
+}
+
+@media (prefers-color-scheme: dark) {
+  #formula-bar {
+    background: #1e1e1e;
+    border-color: #3a3a3a;
+  }
+}
+
+#formula-bar-addr {
+  flex: 0 0 auto;
+  width: 60px;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  border-right: 1px solid #d0d0d0;
+  display: flex;
+  align-items: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  #formula-bar-addr {
+    color: #aaa;
+    border-color: #3a3a3a;
+  }
+}
+
+#formula-bar-input {
+  flex: 1 1 auto;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  padding: 3px 6px;
+  font: inherit;
+  min-width: 0;
+}
+
+#grid-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+table#grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#grid th,
+#grid td {
+  border: 1px solid #d0d0d0;
+  padding: 0;
+  position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  #grid th,
+  #grid td {
+    border-color: #3a3a3a;
+  }
+}
+
+#grid th {
+  background: #e8e8e8;
+  color: #555;
+  font-weight: 600;
+  text-align: center;
+  font-size: 11px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+@media (prefers-color-scheme: dark) {
+  #grid th {
+    background: #2a2a2a;
+    color: #aaa;
+  }
+}
+
+#grid th.row-header,
+#grid td.row-header-cell {
+  position: sticky;
+  left: 0;
+}
+
+#grid th.row-header {
+  z-index: 3;
+}
+
+#grid th.corner {
+  z-index: 4;
+}
+
+#grid td.row-header-cell {
+  background: #e8e8e8;
+  color: #555;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  #grid td.row-header-cell {
+    background: #2a2a2a;
+    color: #aaa;
+  }
+}
+
+#grid input.cell-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  padding: 2px 4px;
+  font: inherit;
+}
+
+#grid input.cell-input:focus {
+  outline: 2px solid #1a73e8;
+  outline-offset: -2px;
+  background: #fff;
+  position: relative;
+  z-index: 5;
+}
+
+@media (prefers-color-scheme: dark) {
+  #grid input.cell-input:focus {
+    background: #10306b;
+  }
+}
+
+#grid input.cell-error {
+  color: #c0392b;
+}
+
+#grid input.cell-in-selection {
+  background: rgba(26, 115, 232, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  #grid input.cell-in-selection {
+    background: rgba(26, 115, 232, 0.28);
+  }
+}
+
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 6;
+}
+
+.row-resize-handle {
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 5px;
+  cursor: row-resize;
+  z-index: 6;
+}
+
+.fill-handle {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 6px;
+  height: 6px;
+  background: #1a73e8;
+  border: 1px solid #fff;
+  cursor: crosshair;
+  z-index: 7;
+}
+
+.fill-preview {
+  outline: 1px dashed #1a73e8;
+  outline-offset: -1px;
+}
+
+#settings-btn {
+  position: fixed;
+  top: 4px;
+  right: 4px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f3f3f3;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  #settings-btn {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+}
+
+#zoom-indicator {
+  position: fixed;
+  top: 4px;
+  right: 30px;
+  z-index: 10;
+  height: 22px;
+  line-height: 1;
+  padding: 0 6px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f3f3f3;
+  color: inherit;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+@media (prefers-color-scheme: dark) {
+  #zoom-indicator {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+}
+
+#clear-all-btn {
+  position: fixed;
+  top: 4px;
+  right: 66px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #f3f3f3;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  #clear-all-btn {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+}
+
+#settings-panel {
+  position: fixed;
+  top: 30px;
+  right: 4px;
+  z-index: 10;
+  width: 220px;
+  padding: 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #fafafa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  #settings-panel {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+}
+
+#settings-panel.hidden {
+  display: none;
+}
+
+#settings-panel label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+#settings-panel input {
+  width: 100%;
+  padding: 3px 5px;
+  font: inherit;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+#settings-actions {
+  display: flex;
+  gap: 6px;
+}
+
+#settings-actions button {
+  flex: 1;
+  font: inherit;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+#shortcut-status {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+#shortcut-status.error {
+  color: #c0392b;
+}
