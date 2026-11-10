@@ -23,6 +23,25 @@ body {
   flex-direction: column;
 }
 
+#toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 4px;
+  border-bottom: 1px solid #d0d0d0;
+  background: #f3f3f3;
+}
+
+@media (prefers-color-scheme: dark) {
+  #toolbar {
+    background: #1e1e1e;
+    border-color: #3a3a3a;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   html,
   body {
@@ -226,33 +245,44 @@ table#grid {
 }
 
 #settings-btn {
-  position: fixed;
-  top: 4px;
-  right: 4px;
-  z-index: 10;
   width: 22px;
   height: 22px;
-  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
   background: #f3f3f3;
-  color: inherit;
+  color: #555;
   cursor: pointer;
-  font-size: 13px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+#settings-btn:hover,
+#settings-btn:focus-visible {
+  background: #e2e8f5;
+  border-color: #1a73e8;
+  color: #1a73e8;
+  outline: none;
 }
 
 @media (prefers-color-scheme: dark) {
   #settings-btn {
     background: #2a2a2a;
     border-color: #3a3a3a;
+    color: #aaa;
+  }
+
+  #settings-btn:hover,
+  #settings-btn:focus-visible {
+    background: #1d2a44;
+    border-color: #4a8df0;
+    color: #8ab4f8;
   }
 }
 
 #zoom-indicator {
-  position: fixed;
-  top: 4px;
-  right: 30px;
-  z-index: 10;
   height: 22px;
   line-height: 1;
   padding: 0 6px;
@@ -272,31 +302,46 @@ table#grid {
 }
 
 #clear-all-btn {
-  position: fixed;
-  top: 4px;
-  right: 66px;
-  z-index: 10;
   width: 22px;
   height: 22px;
-  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
   background: #f3f3f3;
-  color: inherit;
+  color: #555;
   cursor: pointer;
-  font-size: 13px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+#clear-all-btn:hover,
+#clear-all-btn:focus-visible {
+  background: #fbe9e7;
+  border-color: #c0392b;
+  color: #c0392b;
+  outline: none;
 }
 
 @media (prefers-color-scheme: dark) {
   #clear-all-btn {
     background: #2a2a2a;
     border-color: #3a3a3a;
+    color: #aaa;
+  }
+
+  #clear-all-btn:hover,
+  #clear-all-btn:focus-visible {
+    background: #3d1f1b;
+    border-color: #e57368;
+    color: #e57368;
   }
 }
 
 #settings-panel {
   position: fixed;
-  top: 30px;
+  top: 32px;
   right: 4px;
   z-index: 10;
   width: 220px;
