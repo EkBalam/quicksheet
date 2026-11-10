@@ -23,6 +23,11 @@ const COMPARE_OPS: Partial<Record<TokenType, CompareOp>> = {
   GE: '>=',
 };
 
+/** Drops "$" absolute markers: they only matter when shifting on fill, not when evaluating. */
+function cleanAddr(text: string): string {
+  return text.replace(/\$/g, '').toUpperCase();
+}
+
 export function parseFormula(formulaText: string): ASTNode {
   const body = formulaText.startsWith('=') ? formulaText.slice(1) : formulaText;
   const tokens = tokenize(body);
@@ -93,9 +98,9 @@ export function parseFormula(formulaText: string): ASTNode {
       if (peek().type === 'COLON') {
         advance();
         const end = expect('CELL');
-        return { type: 'range', start: t.value.toUpperCase(), end: end.value.toUpperCase() };
+        return { type: 'range', start: cleanAddr(t.value), end: cleanAddr(end.value) };
       }
-      return { type: 'cellref', addr: t.value.toUpperCase() };
+      return { type: 'cellref', addr: cleanAddr(t.value) };
     }
     if (t.type === 'IDENT') {
       advance();

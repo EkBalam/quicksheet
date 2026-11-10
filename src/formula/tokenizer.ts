@@ -24,7 +24,8 @@ export interface Token {
   value: string;
 }
 
-const CELL_RE = /^[A-Za-z]+[0-9]+/;
+// Optional "$" marks an absolute column and/or row ($A$1, A$1, $A1).
+const CELL_RE = /^\$?[A-Za-z]+\$?[0-9]+/;
 const IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*/;
 const NUMBER_RE = /^[0-9]+(\.[0-9]+)?/;
 

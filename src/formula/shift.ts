@@ -1,12 +1,25 @@
 import { tokenize, TokenType } from './tokenizer';
-import { parseAddr, formatAddr } from '../grid/addr';
+import { parseAddr, colIndexToLetters } from '../grid/addr';
 
 const SPACE_AFTER: TokenType[] = ['COMMA'];
 
+const REF_RE = /^(\$?)([A-Za-z]+)(\$?)([0-9]+)$/;
+
+/** Shifts one reference, leaving a "$"-anchored column and/or row in place. */
+function shiftCellRef(ref: string, dCol: number, dRow: number): string {
+  const m = ref.match(REF_RE);
+  const addr = m && parseAddr(m[2] + m[4]);
+  if (!m || !addr) return ref;
+  const [, colAbs, , rowAbs] = m;
+  const col = colAbs ? addr.col : Math.max(1, addr.col + dCol);
+  const row = rowAbs ? addr.row : Math.max(1, addr.row + dRow);
+  return `${colAbs}${colIndexToLetters(col)}${rowAbs}${row}`;
+}
+
 /** Shifts every relative cell reference in a formula by (dCol, dRow), the
- * same way Excel adjusts references when you drag-fill a cell. Non-formula
- * values are returned unchanged. There's no $A$1 absolute-reference syntax
- * in this engine, so every reference shifts (clamped to a minimum of 1). */
+ * same way Excel adjusts references when you drag-fill a cell. References
+ * anchored with "$" ($A$1, A$1, $A1) keep that part fixed. Non-formula
+ * values are returned unchanged (shifted references clamp to a minimum of 1). */
 export function shiftFormula(raw: string, dCol: number, dRow: number): string {
   if (!raw.startsWith('=')) return raw;
 
@@ -19,8 +32,7 @@ export function shiftFormula(raw: string, dCol: number, dRow: number): string {
 
     let text: string;
     if (t.type === 'CELL') {
-      const addr = parseAddr(t.value.toUpperCase());
-      text = addr ? formatAddr(Math.max(1, addr.col + dCol), Math.max(1, addr.row + dRow)) : t.value;
+      text = shiftCellRef(t.value, dCol, dRow);
     } else if (t.type === 'STRING') {
       text = `"${t.value}"`;
     } else {
