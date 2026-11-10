@@ -26,6 +26,49 @@ export function clearAllCells(): void {
   cells.clear();
 }
 
+// Undo/redo: whole-sheet snapshots of raw contents. The sheet is small and
+// ephemeral, so snapshotting is simpler and safer than per-operation diffs.
+type Snapshot = Map<string, string>;
+
+const HISTORY_LIMIT = 100;
+const undoStack: Snapshot[] = [];
+const redoStack: Snapshot[] = [];
+
+function takeSnapshot(): Snapshot {
+  const snap: Snapshot = new Map();
+  for (const [addr, cell] of cells) snap.set(addr, cell.raw);
+  return snap;
+}
+
+function restoreSnapshot(snap: Snapshot): void {
+  cells.clear();
+  for (const [addr, raw] of snap) cells.set(addr, { raw, display: raw });
+  recalcAll();
+}
+
+/** Call right BEFORE a user-visible change to the sheet so it can be undone. */
+export function checkpoint(): void {
+  undoStack.push(takeSnapshot());
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  redoStack.length = 0;
+}
+
+export function undo(): boolean {
+  const prev = undoStack.pop();
+  if (!prev) return false;
+  redoStack.push(takeSnapshot());
+  restoreSnapshot(prev);
+  return true;
+}
+
+export function redo(): boolean {
+  const next = redoStack.pop();
+  if (!next) return false;
+  undoStack.push(takeSnapshot());
+  restoreSnapshot(next);
+  return true;
+}
+
 function isFormula(raw: string): boolean {
   return raw.startsWith('=');
 }

@@ -1,5 +1,5 @@
 import { colIndexToLetters, formatAddr, parseAddr } from './addr';
-import { getCell, setCellRaw, recalcAll } from '../state/cells';
+import { getCell, setCellRaw, recalcAll, checkpoint } from '../state/cells';
 import {
   getActiveAddr,
   setActiveAddr,
@@ -220,7 +220,16 @@ export function renderAll(): void {
   }
 }
 
+/** Re-notifies listeners (formula bar, fill handle) about the active cell, e.g. after undo/redo. */
+export function refreshActiveCell(): void {
+  const addr = getActiveAddr();
+  const cell = getCell(addr);
+  activeCellListeners.forEach((cb) => cb(addr, cell?.raw ?? ''));
+}
+
 export function commitCell(addr: string, rawValue: string): void {
+  if ((getCell(addr)?.raw ?? '') === rawValue) return;
+  checkpoint();
   setCellRaw(addr, rawValue);
   recalcAll();
   renderAll();
@@ -425,6 +434,17 @@ function handleNavigationKeyDown(e: KeyboardEvent, addr: string): void {
 /** Clears the raw content (values and formulas) of every cell in the current selection. */
 export function clearSelection(): void {
   const { minCol, maxCol, minRow, maxRow } = getSelectionRect();
+  let hasContent = false;
+  for (let r = minRow; r <= maxRow && !hasContent; r++) {
+    for (let c = minCol; c <= maxCol; c++) {
+      if (getCell(formatAddr(c, r))) {
+        hasContent = true;
+        break;
+      }
+    }
+  }
+  if (!hasContent) return;
+  checkpoint();
   for (let r = minRow; r <= maxRow; r++) {
     for (let c = minCol; c <= maxCol; c++) {
       setCellRaw(formatAddr(c, r), '');

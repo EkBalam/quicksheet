@@ -1,7 +1,7 @@
 import { formatAddr, parseAddr } from './addr';
 import { ensureSize, renderAll } from './grid';
 import { getActiveAddr } from './selection';
-import { setCellRaw, recalcAll } from '../state/cells';
+import { setCellRaw, recalcAll, checkpoint } from '../state/cells';
 
 export function attachPasteHandler(container: HTMLElement): void {
   container.addEventListener('paste', (e) => {
@@ -19,6 +19,7 @@ export function attachPasteHandler(container: HTMLElement): void {
     const maxCols = Math.max(...rows.map((row) => row.split('\t').length));
     ensureSize(start.col + maxCols - 1, start.row + rows.length - 1);
 
+    checkpoint();
     rows.forEach((rowStr, ri) => {
       rowStr.split('\t').forEach((val, ci) => {
         setCellRaw(formatAddr(start.col + ci, start.row + ri), val.trim());

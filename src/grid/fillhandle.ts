@@ -1,5 +1,5 @@
 import { getCellInput, onActiveCellChange, renderAll } from './grid';
-import { getCell, setCellRaw, recalcAll } from '../state/cells';
+import { getCell, setCellRaw, recalcAll, checkpoint } from '../state/cells';
 import { parseAddr, formatAddr } from './addr';
 import { shiftFormula } from '../formula/shift';
 
@@ -41,6 +41,7 @@ function setPreview(addrs: string[], on: boolean): void {
 function commitFill(sourceAddr: string, sourceRaw: string, path: string[]): void {
   const src = parseAddr(sourceAddr);
   if (!src) return;
+  checkpoint();
   for (const targetAddr of path) {
     const t = parseAddr(targetAddr);
     if (!t) continue;

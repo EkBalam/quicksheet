@@ -5,7 +5,8 @@ import { initResize } from './grid/resize';
 import { initFillHandle } from './grid/fillhandle';
 import { initClipboard } from './grid/clipboard';
 import { initZoom, initZoomIndicator } from './ui/zoom';
-import { recalcAll, clearAllCells } from './state/cells';
+import { initHistory } from './grid/history';
+import { recalcAll, clearAllCells, checkpoint } from './state/cells';
 import { initSettingsPanel } from './settings';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -26,10 +27,12 @@ window.addEventListener('DOMContentLoaded', () => {
   initSettingsPanel();
   clearAllBtn?.addEventListener('click', () => {
     if (!confirm('¿Borrar todos los valores y fórmulas de la hoja?')) return;
+    checkpoint();
     clearAllCells();
     recalcAll();
     renderAll();
   });
+  initHistory(container);
   recalcAll();
   renderAll();
 });
