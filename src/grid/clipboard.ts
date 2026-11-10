@@ -2,13 +2,25 @@ import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { getSelectionRect, isEditing } from './selection';
 import { getCell } from '../state/cells';
 import { formatAddr } from './addr';
+import { clearSelection, selectAll } from './grid';
 
 export function initClipboard(container: HTMLElement): void {
   container.addEventListener('keydown', (e) => {
     if (isEditing()) return; // let native in-input text copy proceed untouched
-    if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'c') return;
-    e.preventDefault();
-    void writeText(buildCopyText());
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (key === 'c') {
+      e.preventDefault();
+      void writeText(buildCopyText());
+    } else if (key === 'x') {
+      e.preventDefault();
+      // Capture the text before clearing; the clear itself is undoable.
+      void writeText(buildCopyText());
+      clearSelection();
+    } else if (key === 'a') {
+      e.preventDefault();
+      selectAll();
+    }
   });
 }
 

@@ -138,6 +138,13 @@ function selectWholeColumn(col: number): void {
   updateSelectionVisual();
 }
 
+export function selectAll(): void {
+  const anchor = formatAddr(1, 1);
+  selectRange(anchor, formatAddr(numCols, numRows));
+  focusCell(anchor);
+  updateSelectionVisual();
+}
+
 function selectWholeRow(row: number): void {
   const { numCols: cols } = getGridSize();
   const anchor = formatAddr(1, row);
