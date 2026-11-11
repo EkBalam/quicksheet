@@ -8,6 +8,7 @@ import { initZoom, initZoomIndicator } from './ui/zoom';
 import { initHistory } from './grid/history';
 import { recalcAll, clearAllCells, checkpoint } from './state/cells';
 import { initSettingsPanel } from './settings';
+import { initImport } from './io/import';
 
 window.addEventListener('DOMContentLoaded', () => {
   const table = document.querySelector<HTMLTableElement>('#grid');
@@ -25,6 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initZoom(container);
   if (zoomIndicator) initZoomIndicator(zoomIndicator);
   initSettingsPanel();
+  initImport();
   clearAllBtn?.addEventListener('click', () => {
     if (!confirm('¿Borrar todos los valores y fórmulas de la hoja?')) return;
     checkpoint();

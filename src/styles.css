@@ -244,7 +244,8 @@ table#grid {
   outline-offset: -1px;
 }
 
-#settings-btn {
+#settings-btn,
+#import-btn {
   width: 22px;
   height: 22px;
   padding: 0;
@@ -260,7 +261,9 @@ table#grid {
 }
 
 #settings-btn:hover,
-#settings-btn:focus-visible {
+#import-btn:hover,
+#settings-btn:focus-visible,
+#import-btn:focus-visible {
   background: #e2e8f5;
   border-color: #1a73e8;
   color: #1a73e8;
@@ -268,14 +271,17 @@ table#grid {
 }
 
 @media (prefers-color-scheme: dark) {
-  #settings-btn {
+  #settings-btn,
+  #import-btn {
     background: #2a2a2a;
     border-color: #3a3a3a;
     color: #aaa;
   }
 
   #settings-btn:hover,
-  #settings-btn:focus-visible {
+  #import-btn:hover,
+  #settings-btn:focus-visible,
+  #import-btn:focus-visible {
     background: #1d2a44;
     border-color: #4a8df0;
     color: #8ab4f8;

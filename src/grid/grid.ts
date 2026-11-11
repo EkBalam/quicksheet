@@ -38,6 +38,14 @@ export function onRowHeaderCreated(cb: RowHeaderListener): void {
   rowHeaderListeners.push(cb);
 }
 
+type SelectionRect = ReturnType<typeof getSelectionRect>;
+const selectionListeners: Array<(rect: SelectionRect) => void> = [];
+
+/** Fires whenever the selection rectangle is redrawn (click, drag, keys, fill, ...). */
+export function onSelectionChange(cb: (rect: SelectionRect) => void): void {
+  selectionListeners.push(cb);
+}
+
 const MIN_COLS = 8;
 const MIN_ROWS = 20;
 const GROWTH_STEP = 5;
@@ -286,6 +294,16 @@ function updateSelectionVisual(): void {
       selectionHighlighted.add(addr);
     }
   }
+  const rect = getSelectionRect();
+  selectionListeners.forEach((cb) => cb(rect));
+}
+
+/** Programmatically selects a rectangle (anchor = active cell) and syncs the UI. */
+export function setSelection(anchor: string, focus: string): void {
+  selectRange(anchor, focus);
+  focusCell(anchor);
+  updateSelectionVisual();
+  refreshActiveCell();
 }
 
 function onCellFocus(addr: string): void {

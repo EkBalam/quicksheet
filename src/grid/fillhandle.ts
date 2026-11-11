@@ -1,92 +1,182 @@
-import { getCellInput, onActiveCellChange, renderAll } from './grid';
+import { getCellInput, onSelectionChange, renderAll, ensureSize, getGridSize, setSelection } from './grid';
 import { getCell, setCellRaw, recalcAll, checkpoint } from '../state/cells';
 import { parseAddr, formatAddr } from './addr';
 import { shiftFormula } from '../formula/shift';
+import { getSelectionRect } from './selection';
+import { fillLine } from './series';
+import { getZoom } from '../ui/zoom';
 
 const PREVIEW_CLASS = 'fill-preview';
 
-/** Builds the straight-line path of addresses from source (exclusive) to
- * target (inclusive), along whichever axis has the larger delta — matching
- * Excel's fill-handle behavior when dragging from a single, unselected cell
- * (no diagonal/L-shaped fill, no multi-cell range source). */
-function computeFillPath(sourceAddr: string, targetAddr: string): string[] {
-  const src = parseAddr(sourceAddr);
-  const tgt = parseAddr(targetAddr);
-  if (!src || !tgt) return [];
+interface Rect {
+  minCol: number;
+  maxCol: number;
+  minRow: number;
+  maxRow: number;
+}
 
-  const dCol = tgt.col - src.col;
-  const dRow = tgt.row - src.row;
-  const path: string[] = [];
+interface FillPlan {
+  vertical: boolean;
+  target: Rect; // the cells to be filled (excludes the source rectangle)
+}
+
+/** Decides which cells a drag from `src` to `hovered` would fill. The fill
+ * extends the source along whichever axis the pointer moved further on
+ * (no diagonal fills), like Excel. Works for a single cell or a range. */
+function planFill(src: Rect, hovered: { col: number; row: number }): FillPlan | null {
+  const dRow = hovered.row > src.maxRow ? hovered.row - src.maxRow : hovered.row < src.minRow ? hovered.row - src.minRow : 0;
+  const dCol = hovered.col > src.maxCol ? hovered.col - src.maxCol : hovered.col < src.minCol ? hovered.col - src.minCol : 0;
+  if (dRow === 0 && dCol === 0) return null;
 
   if (Math.abs(dRow) >= Math.abs(dCol)) {
-    const step = dRow >= 0 ? 1 : -1;
-    for (let r = src.row + step; step > 0 ? r <= tgt.row : r >= tgt.row; r += step) {
-      path.push(formatAddr(src.col, r));
-    }
-  } else {
-    const step = dCol >= 0 ? 1 : -1;
-    for (let c = src.col + step; step > 0 ? c <= tgt.col : c >= tgt.col; c += step) {
-      path.push(formatAddr(c, src.row));
-    }
+    return {
+      vertical: true,
+      target:
+        dRow > 0
+          ? { ...src, minRow: src.maxRow + 1, maxRow: hovered.row }
+          : { ...src, minRow: hovered.row, maxRow: src.minRow - 1 },
+    };
   }
-  return path;
+  return {
+    vertical: false,
+    target:
+      dCol > 0
+        ? { ...src, minCol: src.maxCol + 1, maxCol: hovered.col }
+        : { ...src, minCol: hovered.col, maxCol: src.minCol - 1 },
+  };
+}
+
+function rectAddrs(r: Rect): string[] {
+  const out: string[] = [];
+  for (let row = r.minRow; row <= r.maxRow; row++) {
+    for (let col = r.minCol; col <= r.maxCol; col++) out.push(formatAddr(col, row));
+  }
+  return out;
 }
 
 function setPreview(addrs: string[], on: boolean): void {
-  for (const addr of addrs) {
-    getCellInput(addr)?.classList.toggle(PREVIEW_CLASS, on);
-  }
+  for (const addr of addrs) getCellInput(addr)?.classList.toggle(PREVIEW_CLASS, on);
 }
 
-function commitFill(sourceAddr: string, sourceRaw: string, path: string[]): void {
-  const src = parseAddr(sourceAddr);
-  if (!src) return;
+function commitFill(src: Rect, plan: FillPlan): void {
   checkpoint();
-  for (const targetAddr of path) {
-    const t = parseAddr(targetAddr);
-    if (!t) continue;
-    const newRaw = shiftFormula(sourceRaw, t.col - src.col, t.row - src.row);
-    setCellRaw(targetAddr, newRaw);
+  const { target } = plan;
+  if (plan.vertical) {
+    for (let col = src.minCol; col <= src.maxCol; col++) {
+      const sources: string[] = [];
+      for (let row = src.minRow; row <= src.maxRow; row++) sources.push(getCell(formatAddr(col, row))?.raw ?? '');
+      for (let row = target.minRow; row <= target.maxRow; row++) {
+        const raw = fillLine(sources, row - src.minRow, (s, d) => shiftFormula(s, 0, d));
+        setCellRaw(formatAddr(col, row), raw);
+      }
+    }
+  } else {
+    for (let row = src.minRow; row <= src.maxRow; row++) {
+      const sources: string[] = [];
+      for (let col = src.minCol; col <= src.maxCol; col++) sources.push(getCell(formatAddr(col, row))?.raw ?? '');
+      for (let col = target.minCol; col <= target.maxCol; col++) {
+        const raw = fillLine(sources, col - src.minCol, (s, d) => shiftFormula(s, d, 0));
+        setCellRaw(formatAddr(col, row), raw);
+      }
+    }
   }
   recalcAll();
   renderAll();
+
+  // Like Excel, the selection grows to cover the source plus the filled cells.
+  const all: Rect = {
+    minCol: Math.min(src.minCol, target.minCol),
+    maxCol: Math.max(src.maxCol, target.maxCol),
+    minRow: Math.min(src.minRow, target.minRow),
+    maxRow: Math.max(src.maxRow, target.maxRow),
+  };
+  setSelection(formatAddr(all.minCol, all.minRow), formatAddr(all.maxCol, all.maxRow));
 }
 
+const EDGE = 24; // px from the container edge where auto-scroll kicks in
+const SCROLL_TICK_MS = 40;
+
 export function initFillHandle(): void {
+  const container = document.querySelector<HTMLElement>('#grid-container');
   const handle = document.createElement('div');
   handle.className = 'fill-handle';
 
-  let activeAddr = 'A1';
-  onActiveCellChange((addr) => {
-    activeAddr = addr;
-    const input = getCellInput(addr);
-    const td = input?.parentElement;
-    if (td) td.appendChild(handle);
-  });
+  // The handle sits on the bottom-right cell of the selection, as in Excel.
+  const place = (r: Rect) => {
+    getCellInput(formatAddr(r.maxCol, r.maxRow))?.parentElement?.appendChild(handle);
+  };
+  onSelectionChange(place);
+  place(getSelectionRect());
 
   handle.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const sourceAddr = activeAddr;
-    const sourceRaw = getCell(sourceAddr)?.raw ?? '';
-    let lastPath: string[] = [];
+    const src = getSelectionRect();
+    let lastPlan: FillPlan | null = null;
+    let lastPreview: string[] = [];
+    let mouseX = e.clientX;
+    let mouseY = e.clientY;
 
+    /** Maps the pointer (clamped inside the visible cell area, so dragging past
+     * the edge or over the sticky headers still resolves to a cell) to a plan. */
+    const update = () => {
+      let x = mouseX;
+      let y = mouseY;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const z = getZoom() / 100;
+        x = Math.min(Math.max(x, rect.left + 40 * z), rect.right - 20);
+        y = Math.min(Math.max(y, rect.top + 28 * z), rect.bottom - 20);
+      }
+      const el = document.elementFromPoint(x, y) as HTMLElement | null;
+      const hoveredAddr = el?.closest<HTMLInputElement>('.cell-input')?.dataset.addr;
+      const hovered = hoveredAddr ? parseAddr(hoveredAddr) : null;
+      if (!hovered) return;
+      const plan = planFill(src, hovered);
+      setPreview(lastPreview, false);
+      lastPlan = plan;
+      lastPreview = plan ? rectAddrs(plan.target) : [];
+      setPreview(lastPreview, true);
+    };
+
+    /** Scrolls the grid while the pointer is at/over an edge, growing the grid
+     * when the end is reached so a long fill never hits a wall. */
+    const autoScroll = () => {
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const speed = (dist: number) => Math.min(40, 6 + dist / 3);
+      let dx = 0;
+      let dy = 0;
+      if (mouseY > rect.bottom - EDGE) dy = speed(mouseY - (rect.bottom - EDGE));
+      else if (mouseY < rect.top + EDGE) dy = -speed(rect.top + EDGE - mouseY);
+      if (mouseX > rect.right - EDGE) dx = speed(mouseX - (rect.right - EDGE));
+      else if (mouseX < rect.left + EDGE) dx = -speed(rect.left + EDGE - mouseX);
+      if (dx === 0 && dy === 0) return;
+
+      const { numCols, numRows } = getGridSize();
+      if (dy > 0 && container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
+        ensureSize(numCols, numRows + 1);
+      }
+      if (dx > 0 && container.scrollLeft + container.clientWidth >= container.scrollWidth - 2) {
+        ensureSize(numCols + 1, numRows);
+      }
+      container.scrollBy(dx, dy);
+      update();
+    };
+
+    const timer = window.setInterval(autoScroll, SCROLL_TICK_MS);
     const onMove = (ev: MouseEvent) => {
-      const el = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
-      const input = el?.closest<HTMLInputElement>('.cell-input');
-      const hoveredAddr = input?.dataset.addr;
-      if (!hoveredAddr) return;
-      const path = computeFillPath(sourceAddr, hoveredAddr);
-      setPreview(lastPath, false);
-      setPreview(path, true);
-      lastPath = path;
+      mouseX = ev.clientX;
+      mouseY = ev.clientY;
+      update();
     };
     const onUp = () => {
+      window.clearInterval(timer);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      setPreview(lastPath, false);
-      if (lastPath.length > 0) commitFill(sourceAddr, sourceRaw, lastPath);
+      setPreview(lastPreview, false);
+      if (lastPlan) commitFill(src, lastPlan);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
